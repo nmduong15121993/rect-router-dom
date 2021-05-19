@@ -5,22 +5,38 @@ import {
   PieChartOutlined,
   FileOutlined,
   TeamOutlined,
-  UserOutlined,
 } from "@ant-design/icons";
-import { NavLink, useLocation, useParams } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import "./menu.css";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
 
-const MenuSidebar = () => {
-  const [openKey, setOpenKey] = React.useState(['1']);
-  const [selectKey, setSelectKey] = React.useState(["key2"]);
-  const location = useLocation();
-  const para = useParams();
+const MENU_BAR = {
+  user: {
+    key: 'sub1',
+    subData: [
+      { key: 'key1', to: '/key1', inner: 'Tom' },
+      { key: 'key2', to: '/key2', inner: 'Bill' },
+      { key: 'key3', to: '/key3', inner: 'Jerry' },
+    ]
+  },
+  team: {
+    key: 'sub2',
+    subData: [
+      { key: 'key4', to: '/key4', inner: 'Team 1' },
+      { key: 'key5', to: '/key5', inner: 'Team 2' },
+    ]
+  }
+}
 
+const MenuSidebar = () => {
   const [collapsed, setCollapsed] =  React.useState(false);
+  const [activeMenuBar, setActiveMenuBar] = React.useState({
+    key: 'key1',
+    openKey: 'sub1',
+  });
 
   const onCollapse = collapsed => {
     console.log(collapsed);
@@ -28,15 +44,19 @@ const MenuSidebar = () => {
   };
 
   React.useEffect(() => {
-    console.log('Did Mount');
-    console.log(location);
-    const { pathname } = location;
-    if( pathname === "/key1" || pathname === "/key2" ) {
-      setOpenKey(['sub1']);
-      console.log("setclass");
+    const localKeyActive = localStorage.getItem('keyActive');
+    if (localKeyActive) {
+      const localKeyActivePaser = JSON.parse(localKeyActive);
+      setActiveMenuBar(localKeyActivePaser);
     }
-    
   }, []);
+
+  function changeOption(openKey, key) {
+    const keyActive = JSON.stringify({ key, openKey });
+    localStorage.setItem('keyActive', keyActive);
+  }
+
+  console.log(activeMenuBar);
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -44,9 +64,10 @@ const MenuSidebar = () => {
         <div className="logo" style={{color: "red"}} ></div>
 
         <Menu 
-          theme="dark" 
-          defaultSelectedKeys={selectKey}
-          defaultOpenKeys={openKey} 
+          theme="dark"
+          key={JSON.stringify(activeMenuBar)}
+          defaultOpenKeys={[activeMenuBar.openKey]}
+          defaultSelectedKeys={[activeMenuBar.key]}
           mode="inline"
         >
           <Menu.Item key="1" icon={<PieChartOutlined />}>
@@ -56,21 +77,20 @@ const MenuSidebar = () => {
             <NavLink to="/option1" >Option 2</NavLink>
           </Menu.Item>
 
-          <SubMenu key="sub1" icon={<UserOutlined />} title="User">
-            <Menu.Item key="key1">
-              <NavLink to="/key1" >Tom</NavLink>
-            </Menu.Item>
-            <Menu.Item key="key2">
-             <NavLink to="/key2" >Bill</NavLink>
-            </Menu.Item>
-            <Menu.Item key="key3">
-              <NavLink to="/key3" >Jerry</NavLink>
-            </Menu.Item>
-          </SubMenu>
-          <SubMenu key="sub2" icon={<TeamOutlined />} title="Team">
-            <Menu.Item key="6">Team 1</Menu.Item>
-            <Menu.Item key="8">Team 2</Menu.Item>
-          </SubMenu>
+          {
+            Object.keys(MENU_BAR).map((keyMenu) => {
+
+              return (
+                <SubMenu key={MENU_BAR[keyMenu]['key']} icon={<TeamOutlined />} title={keyMenu}>
+                  { MENU_BAR[keyMenu]['subData'].map(({ key, to, inner }) => (
+                    <Menu.Item key={key}>
+                      <NavLink onClick={() => changeOption(MENU_BAR[keyMenu]['key'], key)} to={to} >{inner}</NavLink>
+                    </Menu.Item>
+                  )) }
+                </SubMenu>
+              )
+            })
+          }
           <Menu.Item key="9" icon={<FileOutlined />}>
             Files
           </Menu.Item>
